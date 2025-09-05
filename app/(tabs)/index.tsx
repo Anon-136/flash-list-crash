@@ -1,98 +1,123 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View, ViewProps } from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { FlashList, FlashListRef } from "@shopify/flash-list";
+import React from "react";
+import Animated, {
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const HEADER_HEIGHT = 500;
 export default function HomeScreen() {
+  const animatedRef = useAnimatedRef<FlashListRef<any>>();
+  const safeAreaInsets = useSafeAreaInsets();
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      "worklet";
+      const y = event.contentOffset.y;
+      scrollY.value = y;
+    },
+  });
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: -scrollY.value }],
+    };
+  });
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={{ paddingTop: safeAreaInsets.top, flex: 1 }}>
+      <Animated.View
+        style={[styles.header, animatedStyle, { top: safeAreaInsets.top }]}
+      >
+        <Text>This is header</Text>
+      </Animated.View>
+      <AnimatedFlashList
+        contentContainerStyle={{ paddingTop: HEADER_HEIGHT }}
+        ref={animatedRef}
+        onScroll={scrollHandler}
+        data={Array.from({ length: 100 }, (_, i) => i)}
+        renderItem={({ item }) => <CardSkeleton />}
+      />
+    </View>
   );
 }
 
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
+
+export const CardSkeleton = (props: ViewProps) => {
+  return (
+    <View style={styles.cardContainer} {...props}>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardAvatar} />
+        <View style={styles.cardTitleContainer}>
+          <View style={styles.cardTitle} />
+          <View style={styles.cardSubtitle} />
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
+  header: {
+    height: HEADER_HEIGHT,
+    backgroundColor: "lightblue",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
     left: 0,
-    position: 'absolute',
+    right: 0,
+    zIndex: 1,
+  },
+  cardContainer: {
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 16,
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  cardHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  cardAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E5E7EB",
+    marginRight: 12,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardTitleContainer: {
+    display: "flex",
+    flexDirection: "column",
+    paddingVertical: 4,
+    gap: 8,
+  },
+  cardTitle: {
+    width: 160,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#E5E7EB",
+  },
+  cardSubtitle: {
+    width: 100,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#E5E7EB",
   },
 });
