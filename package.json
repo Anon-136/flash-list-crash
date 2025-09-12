@@ -53,5 +53,10 @@
     "staticFeatureFlags": {
       "DISABLE_COMMIT_PAUSING_MECHANISM": true
     }
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "react-native-css-interop": "patches/react-native-css-interop.patch"
+    }
   }
 }
